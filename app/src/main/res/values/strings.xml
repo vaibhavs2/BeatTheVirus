@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">BeatTheVirus</string>
+    <string name="start">Start</string>
+    <string name="start_text">Click start whenever you go outside</string>
+    <string name="bluetooth">Blootooth</string>
+    <string name="meter">2 meter</string>
+</resources>
