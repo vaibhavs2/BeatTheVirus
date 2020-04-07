@@ -56,6 +56,8 @@ public class ListActivity extends AppCompatActivity {
                 else
                     ringtone.stop();
 
+
+
         }
 
         @Override
@@ -66,6 +68,7 @@ public class ListActivity extends AppCompatActivity {
         @Override
         public void onScanFailed(int errorCode) {
             super.onScanFailed(errorCode);
+
             Toast.makeText(ListActivity.this, "Problem in scanning",Toast.LENGTH_SHORT).show();
         }
     };
@@ -78,20 +81,21 @@ public class ListActivity extends AppCompatActivity {
 
         infoList = new ArrayList<>();
          bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
+        ringtone = RingtoneManager.getRingtone(ListActivity.this, notification);
+        recyclerView = findViewById(R.id.listView);
+        recyclerView.setHasFixedSize(true);
+        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(this);
+        recyclerView.setLayoutManager(layoutManager);
 
-        if (!bluetoothAdapter.isEnabled()) {
+        if (bluetoothAdapter.isEnabled()) {
+            scanLeDevice(true);
+        }
+        else{
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
         }
 
-
-         scanLeDevice(BT_enabled);
-        notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-        ringtone = RingtoneManager.getRingtone(ListActivity.this, notification);
-         recyclerView = findViewById(R.id.listView);
-         recyclerView.setHasFixedSize(true);
-         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(this);
-         recyclerView.setLayoutManager(layoutManager);
         listAdapter =new ListAdapter(infoList,this);
             recyclerView.setAdapter(listAdapter);
 
@@ -133,9 +137,11 @@ public class ListActivity extends AppCompatActivity {
         return (float)Math.pow(10, ((float) txPower - rssi) / (10 * 2));
     }
 
+
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
+    protected void onStop() {
+        super.onStop();
+        ringtone.stop();
         bluetoothLeScanner.stopScan(mLeScanCallback);
     }
 
@@ -145,7 +151,7 @@ public class ListActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
 
         if(requestCode==REQUEST_ENABLE_BT && resultCode==RESULT_OK){
-            BT_enabled=true;
+
             Toast.makeText(ListActivity.this, "Bluetooth Enabled", Toast.LENGTH_LONG).show();
         }
     }

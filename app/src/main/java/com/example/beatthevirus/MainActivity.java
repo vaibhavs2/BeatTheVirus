@@ -23,32 +23,41 @@ Button start;
     List<String> remainingPermissions;
  final int   MY_PERMISSIONS_REQUEST_BLUETOOTH = 7878;
     final int REQUEST_ENABLE_BT=5344;
+    BluetoothAdapter bluetoothAdapter;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         start=findViewById(R.id.start_btn);
+        bluetoothAdapter  = BluetoothAdapter.getDefaultAdapter();
+        if (bluetoothAdapter == null) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+            builder.setMessage("You don't have Bluetooth hardware, Can't proceed");
+            builder.setTitle("System Error").create().show();
+            // Use this check to determine whether BLE is supported on the device. Then
+            if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
+                Toast.makeText(MainActivity.this, "Bluetooth version 4 not supported", Toast.LENGTH_SHORT).show();
+                finish();
+            }
+
+        } else{
+            requestMultiplePermissions();
+
+        }
+
+
         start.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-                if (bluetoothAdapter == null) {
-                     AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-                     builder.setMessage("You don't have Bluetooth hardware, Can't proceed");
-                     builder.setTitle("System Error").create().show();
-                    // Use this check to determine whether BLE is supported on the device. Then
-                    if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
-                        Toast.makeText(MainActivity.this, "Bluetooth version 4 not supported", Toast.LENGTH_SHORT).show();
-                        finish();
-                    }
-
+                if (!bluetoothAdapter.isEnabled()) {
+                    Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                    startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
                 }
-
                 else{
-                    requestMultiplePermissions();
+               Intent intent = new Intent(MainActivity.this, ListActivity.class);
+               startActivity(intent);}
 
-                }
             }
         });
 
@@ -65,11 +74,7 @@ Button start;
         ActivityCompat.requestPermissions(MainActivity.this, remainingPermissions.toArray(new String[remainingPermissions.size()]) ,MY_PERMISSIONS_REQUEST_BLUETOOTH);
         else{
 
-            BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-            if (!bluetoothAdapter.isEnabled()) {
-                Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
-            }
+
         }
 
     }
@@ -80,7 +85,7 @@ Button start;
             case MY_PERMISSIONS_REQUEST_BLUETOOTH: {
                 for(int i=grantResults.length ;i>0 ;i--){
 
-                    if(grantResults[i] != PackageManager.PERMISSION_GRANTED){
+                    if(grantResults[i-1] != PackageManager.PERMISSION_GRANTED){
                         if(ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this,permissions[i])){
                             new AlertDialog.Builder(this).setTitle("Important Request")
                                     .setMessage("As we are using bluetooth to measure distance, please permit these requests")
