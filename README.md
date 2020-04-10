@@ -10,7 +10,8 @@ An Android device
 Having Bluetooth capability
 Its a concept of finding distance between two person so both sould have android bluetooth enabled devce.
 ## In future
-We can use Bluetooth Low energy that can save battery as bluetooth need to always in scanning mode if app is running, so take lot of resources from Mobile phone.
+We can use Bluetooth Low energy that can save battery as bluetooth need to always in scanning mode. As if app is running it takes lot of resources from Mobile phone.
+And using caliberation we can enhance precise distance.
 
 ## Software Requirements
 Bluetooth Discoverable (always)
