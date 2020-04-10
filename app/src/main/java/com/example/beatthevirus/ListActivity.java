@@ -4,19 +4,25 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+
 import android.bluetooth.le.BluetoothLeScanner;
-import android.bluetooth.le.ScanCallback;
-import android.bluetooth.le.ScanResult;
+
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
-import android.media.Ringtone;
-import android.media.RingtoneManager;
-import android.net.Uri;
-import android.os.Build;
+import android.content.IntentFilter;
+import android.media.AudioManager;
+import android.media.ToneGenerator;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Toast;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class ListActivity extends AppCompatActivity {
     private static final int REQUEST_ENABLE_BT = 6768;
@@ -26,105 +32,77 @@ public class ListActivity extends AppCompatActivity {
     ListAdapter listAdapter;
     RecyclerView recyclerView;
     List<list_Info> infoList;
-    Uri notification;
-    Ringtone ringtone;
-    boolean BT_enabled=false;
-
-    private ScanCallback mLeScanCallback = new ScanCallback() {
+    ToneGenerator toneGen1;
 
 
-        @Override
-        public void onScanResult(int callbackType, ScanResult result) {
-            super.onScanResult(callbackType, result);
-            int txPower;
-            if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.O){
-                //average tx power in android bluetooth (google)
-               txPower=8;
-            } else{
-                txPower=result.getTxPower();
-            }
-          float  distance = getDistance(result.getRssi(),txPower);
-                infoList.add(new list_Info(result.getDevice().getName(),distance));
+    private final BroadcastReceiver receiver = new BroadcastReceiver() {
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (BluetoothDevice.ACTION_FOUND.equals(action)) {
+                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                int  rssi = intent.getShortExtra(BluetoothDevice.EXTRA_RSSI,Short.MAX_VALUE);
+               int distance =(int) getDistance(rssi, 70);
+               infoList.add(new list_Info(device.getName(),distance));
+               if(distance<2)
+                    toneGen1.startTone(ToneGenerator.TONE_CDMA_PIP,700);
+
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
+
                         listAdapter.notifyDataSetChanged();
                     }
                 });
-                if(distance<2) //metre
-                ringtone.play();
-                else
-                    ringtone.stop();
-
-
-
-        }
-
-        @Override
-        public void onBatchScanResults(List<ScanResult> results) {
-            super.onBatchScanResults(results);
-        }
-
-        @Override
-        public void onScanFailed(int errorCode) {
-            super.onScanFailed(errorCode);
-
-            Toast.makeText(ListActivity.this, "Problem in scanning",Toast.LENGTH_SHORT).show();
+            }
         }
     };
+
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_list);
-
         infoList = new ArrayList<>();
-         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
-        ringtone = RingtoneManager.getRingtone(ListActivity.this, notification);
+        toneGen1 = new ToneGenerator(AudioManager.STREAM_MUSIC, 100);
+        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+        registerReceiver(receiver, filter);
+        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+
         recyclerView = findViewById(R.id.listView);
         recyclerView.setHasFixedSize(true);
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(layoutManager);
-
-        if (bluetoothAdapter.isEnabled()) {
-            scanLeDevice(true);
-        }
-        else{
-            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
-        }
-
         listAdapter =new ListAdapter(infoList,this);
             recyclerView.setAdapter(listAdapter);
+        bluetoothAdapter.startDiscovery();
+
+        Timer t = new Timer();
+        t.scheduleAtFixedRate(new TimerTask() {
+                                  @Override
+                                  public void run() {
+                                      infoList.clear();
+                                      bluetoothAdapter.startDiscovery();
+                                  }
+
+                              },
+//Set how long before to start calling the TimerTask (in milliseconds)
+                0,
+//Set the amount of time between each execution (in milliseconds)
+                13000);
+
+
 
 //        Intent discoverableIntent =
 //                new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
 //        discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 0);
 //        startActivity(discoverableIntent);
 
-//          https://altbeacon.github.io/android-beacon-library/distance-calculations2.html
-//        https://altbeacon.github.io/android-beacon-library/distance-calculations.html
-//          https://docs.google.com/spreadsheets/d/1ymREowDj40tYuA5CXd4IfC4WYPXxlx5hq1x8tQcWWCI/edit#gid=0
-//        https://stackoverflow.com/questions/20416218/understanding-ibeacon-distancing
-//        https://stackoverflow.com/questions/29790853/get-tx-power-of-ble-beacon-in-android
-//        https://stackoverflow.com/questions/36862185/what-exactly-is-txpower-for-bluetooth-le-and-how-is-it-used/36862382
 
     }
 
 
-    private void scanLeDevice( boolean enable) {
 
-        bluetoothLeScanner = bluetoothAdapter.getBluetoothLeScanner();
-
-        if (enable) {
-            bluetoothLeScanner.startScan(mLeScanCallback);
-        } else {
-            mScanning = false;
-            bluetoothLeScanner.stopScan(mLeScanCallback);
-        }
-    }
 
     float getDistance(int rssi, int txPower) {
         /*
@@ -139,11 +117,12 @@ public class ListActivity extends AppCompatActivity {
 
 
     @Override
-    protected void onStop() {
-        super.onStop();
-        ringtone.stop();
-        bluetoothLeScanner.stopScan(mLeScanCallback);
+    protected void onDestroy() {
+        super.onDestroy();
+        unregisterReceiver(receiver);
+        bluetoothAdapter.cancelDiscovery();
     }
+
 
 
     @Override
@@ -155,4 +134,7 @@ public class ListActivity extends AppCompatActivity {
             Toast.makeText(ListActivity.this, "Bluetooth Enabled", Toast.LENGTH_LONG).show();
         }
     }
+
+
+
 }

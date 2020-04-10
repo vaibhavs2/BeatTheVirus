@@ -39,12 +39,19 @@ List<list_Info> list;
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
 
         holder.bluetooth.setText(list.get(position).getBlutooth());
-        if(list.get(position).getDistance()<2.5)
-        holder.distance.setTextColor(Color.RED);
-        else
-            holder.distance.setTextColor(Color.BLACK);
+        String text="";
+        if(list.get(position).getDistance()<2){
+            holder.distance.setTextColor(Color.RED);
+            text ="harm- "+ list.get(position).getDistance()+" Metre";
 
-        holder.distance.setText(String.valueOf(list.get(position).getDistance()));
+        }
+        else {
+            holder.distance.setTextColor(Color.BLACK);
+            text = list.get(position).getDistance()+" Metre";
+        }
+
+
+        holder.distance.setText(text);
     }
 
     @Override

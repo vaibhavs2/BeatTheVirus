@@ -1,16 +1,16 @@
 package com.example.beatthevirus;
 
 public class list_Info {
-   private float distance;
+   private double distance;
    private String bluetooth;
 
 
-    public list_Info(String bluetooth, float distance){
+    public list_Info(String bluetooth, double distance){
         this.bluetooth=bluetooth;
         this.distance = distance;
     }
 
-    public float getDistance() {
+    public double getDistance() {
         return distance;
     }
 
