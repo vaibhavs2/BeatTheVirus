@@ -24,3 +24,12 @@ Android Version 5 or above
 
 ## Data Flow Diagram
 ![Image of Yaktocat](https://github.com/vaibhavs2/android-Blutetooth/blob/master/dataflow.png)
+
+## References
+[What exactly is txPower for Bluetooth LE and how is it used?](https://stackoverflow.com/questions/36862185/what-exactly-is-txpower-for-bluetooth-le-and-how-is-it-used/36862382)
+
+[Android Beacon Library](https://altbeacon.github.io/android-beacon-library/distance-calculations2.html)
+
+[Understanding ibeacon distancing](https://stackoverflow.com/questions/20416218/understanding-ibeacon-distancing)
+
+[Get Tx Power of BLE Beacon in Android](https://stackoverflow.com/questions/29790853/get-tx-power-of-ble-beacon-in-android)
